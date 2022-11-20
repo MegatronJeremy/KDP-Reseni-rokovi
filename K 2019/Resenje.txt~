@@ -60,6 +60,7 @@ monitor Garaza {
 	int tiketI = 0, tiketU = 0, nextI = 0, nextU = 0;
 	const int N = ...;
 	int mesta = N;
+	bool rampaZauzeta = false;
 	condition rampaU, rampaI;
 
 	boolean trazim_ulaz() {
@@ -68,27 +69,32 @@ monitor Garaza {
 		
 		nu++;
 		int redU = tiketU++;
-		while (redU != nextU && ni > 0) wait(rampaU);
-		nu--;
-		nextU++;
+		while (redU != nextU && ni > 0 && rampaZauzeta) wait(rampa);
+		rampaZauzeta = true;
 		return true;
 	}
 
 	void usao() {
-		signalAll(rampaU);
+		rampaZauzeta = false;
+		nu--;
+		mesta--;
+		nextU++;
+		signalAll(rampa);
 	}	
 
 	void trazim_izlaz() {
 		ni++;
 		int redI = tiketI++;
-		while (redI != nextI) wait(rampaI);
-		ni--;
-		nextI++;
+		while (redI != nextI && rampaZauzeta) wait(rampa);
+		rampaZauzeta = true;
 	}
 
 	void izasao() {
-		if (ni == 0) signalAll(rampaU);
-		else signalAll(rampaI);
+		rampaZauzeta = false;
+		ni--;
+		mesta++;
+		nextI++;
+		signalAll(rampa);
 	}
 
 }
