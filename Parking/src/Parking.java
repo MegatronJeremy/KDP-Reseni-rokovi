@@ -1,12 +1,15 @@
+import java.util.Random;
 import java.util.concurrent.Semaphore;
 
 public class Parking {
 	private static final int N = 10;
 	private static final int M = 20;
-	private static final int K = 5;
+	private static final int K = 3;
 
 	private static int ID = 0;
-	private static int pri = 2, ewi = 0, eri = 0, lwi = 0, lri = 0, ke = 0, kl = 0, de = 0, dl = 0, empty = N;
+	private static int empty = N, brU = 0, brI = 0, uzU = K, uzI = 0;
+	private static int[] wi = new int[2], ri = new int[2];
+	private static boolean rampaZauzeta = false;
 
 	private static Semaphore sem[] = new Semaphore[2 * N + 1];
 
@@ -24,13 +27,17 @@ public class Parking {
 			try {
 				while (true) {
 					requestEntry();
-					System.out.println("Car " + id + " entering parking lot...");
+					synchronized(this) {
+						wait(new Random().nextInt(100) + 300);
+					}
 					signalEntry();
 					synchronized (this) {
-						wait(1000);
+						wait(new Random().nextInt(1000) + 2000);
 					}
 					requestExit();
-					System.out.println("Car " + id + " exiting parking lot...");
+					synchronized(this) {
+						wait(new Random().nextInt(100) + 300);
+					}
 					signalExit();
 
 				}
@@ -39,82 +46,101 @@ public class Parking {
 			}
 		}
 
-		private void signalExit() {
-			if ((pri == 1 || dl == 0) && de > 0) {
-				de--;
-				int ind = eri;
-				eri = (eri + 1) % N;
-				sem[ind].release();
-			} else if (dl > 0) {
-				dl--;
-				int ind = lri + N;
-				lri = (lri + 1) % N;
-				sem[ind].release();
-			} else
-				sem[2 * N].release();
+		private void signalExit() throws InterruptedException {
+			sem[2 * N].acquire();
 
+			System.out.println("Car " + id + " exiting...");
+
+			uzI++;
+			brI--;
+			empty++;
+
+			if (wi[0] != ri[0] && uzI >= K) {
+				uzI = 0;
+
+				int ind = ri[0]++;
+				ri[0] %= N;
+				sem[ind].release();
+			} else if (wi[1] != ri[1]) {
+				int ind = ri[1]++ + N;
+				ri[1] %= N;
+
+				sem[ind].release();
+			} else {
+				rampaZauzeta = false;
+				sem[2 * N].release();
+			}
 		}
 
 		private void requestExit() throws InterruptedException {
 			sem[2 * N].acquire();
-			if (pri == 1 && de > 0 && empty != 0) {
-				dl++;
-				int ind = lwi + N;
-				lwi = (lwi + 1) % N;
-				System.out.println("Exit blocked..." + pri + " " + de);
+
+			System.out.println("Car " + id + " requesting exit...");
+
+			brI++;
+
+			if (rampaZauzeta) {
+				int ind = wi[1]++ + N;
+				wi[1] %= N;
+				
 				sem[2 * N].release();
 				sem[ind].acquire();
-			}
-
-			empty++;
-
-			if (kl == K) {
-				pri = 1;
-				kl = 0;
 			} else
-				kl++;
-			ke = 0;
+				rampaZauzeta = true;
+
+			sem[2 * N].release();
 		}
 
-		private void signalEntry() {
-			if ((pri == 2 || de == 0) && dl > 0) {
-				dl--;
-				int ind = lri + N;
-				lri = (lri + 1) % N;
+		private void signalEntry() throws InterruptedException {
+			sem[2 * N].acquire();
+
+			System.out.println("Car " + id + " entered...");
+
+			uzU++;
+			brU--;
+			empty--;
+
+			if (wi[1] != ri[1] && uzU >= K) {
+				uzU = 0;
+
+				int ind = ri[1]++ + N;
+				ri[1] %= N;
+
 				sem[ind].release();
-			} else if (de > 0) {
-				de--;
-				int ind = eri;
-				eri = (eri + 1) % N;
+			} else if (empty != 0 && wi[0] != ri[0]) {
+				int ind = ri[0]++;
+				ri[0] %= N;
+
 				sem[ind].release();
-			} else
+			} else {
+				rampaZauzeta = false;
 				sem[2 * N].release();
+			}
 		}
 
 		private void requestEntry() throws InterruptedException {
 			sem[2 * N].acquire();
-			if (empty + dl - de == 0) {
+
+			System.out.println("Car " + id + " requesting entry...");
+
+			if (empty + brI - brU == 0) {
 				sem[2 * N].release();
 				throw new InterruptedException();
 			}
-			if (empty == 0 || (pri == 2 && dl > 0)) {
-				de++;
-				int ind = ewi;
-				ewi = (ewi + 1) % N;
-				System.out.println("Entry blocked..." + pri + " " + dl + " " + empty);
+
+			brU++;
+
+			if (empty == 0 || rampaZauzeta) {
+				int ind = wi[0]++;
+				wi[0] %= N;
+				
 				sem[2 * N].release();
 				sem[ind].acquire();
-			}
-
-			empty--;
-
-			if (ke == K) {
-				pri = 2;
-				ke = 0;
 			} else
-				ke++;
+				rampaZauzeta = true;
 
-			kl = 0;
+
+			sem[2 * N].release();
 		}
 
 	}

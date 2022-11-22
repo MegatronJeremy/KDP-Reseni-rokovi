@@ -20,7 +20,7 @@ public class MonitorSC {
 			e.acquire();
 		}
 		
-		public void signalSC() throws InterruptedException {
+		public void signalSC() {
 			if (cnt == 0) return;
 			cnt--;
 			if (pq.isEmpty())
@@ -31,7 +31,7 @@ public class MonitorSC {
 			}
 		}
 		
-		public void signalAll() throws InterruptedException {
+		public void signalAll() {
 			while (cnt > 0) signalSC();
 		}
 

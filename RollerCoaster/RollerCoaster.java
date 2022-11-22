@@ -24,8 +24,8 @@ public class RollerCoaster {
 					} else {
 						entry.release();
 					}
+
 					exit.acquire();
-					
 					cnt--;
 					if (cnt > 0) {
 						exit.release();
