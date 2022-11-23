@@ -1,3 +1,5 @@
+import java.util.Random;
+
 import monitor.*;
 
 public class SingleBathroomSW extends MonitorSW {
@@ -148,7 +150,7 @@ public class SingleBathroomSW extends MonitorSW {
 
 		protected void useToilet() throws InterruptedException {
 			synchronized (this) {
-				wait(1000);
+				wait(1000 + new Random().nextInt(2000));
 			}
 //			System.out.println("Exiting.. " + toString());
 		}
