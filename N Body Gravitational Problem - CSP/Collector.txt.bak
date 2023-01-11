@@ -1,0 +1,12 @@
+COLLECTOR::{
+	int it = 0;
+	body space[N] = ...;
+	*{
+		int k = 0;
+		*{
+		
+		}
+	
+	}
+
+}

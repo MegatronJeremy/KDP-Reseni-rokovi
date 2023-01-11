@@ -1,0 +1,101 @@
+1.
+init()
+const int N = ...;
+sem e = 1;
+List<sem> l;
+List<int> who;
+int nr = 0, nw = 0;
+
+reader()
+wait(e);
+if (nw > 0 || !who.empty()) {
+	sem x = 0;
+	l.add(x);
+	who.add(0);
+
+	signal(e);
+	wait(x);
+}
+nr++;
+signalCode();
+read();
+wait(e);
+nr--;
+signalCode();
+
+writer()
+wait(e);
+if (nr > 0 || nw > 0 || !who.empty()) {
+	sem x = 0;
+	l.add(x);
+	who.add(1);
+
+	signal(e);
+	wait(x);
+}
+nw++;
+signal(e);
+write();
+wait(e);
+nw--;
+signalCode();
+
+signalCode() {
+	if (!who.empty() && who.peek() == 1 && nr == 0 && nw == 0) {
+		who.remove();
+		sem x = l.remove();
+		signal(x);
+	} else if (!who.empty() && who.peek() == 0 && nw == 0) {
+		who.remove();
+		sem x = l.remove();
+		signal(x);
+	} else {
+		signal(e);
+	}
+}
+
+2.
+monitor Garaza {
+	int nu = 0, ni = 0;
+	int tiketI = 0, tiketU = 0, nextI = 0, nextU = 0;
+	const int N = ...;
+	int mesta = N;
+	bool rampaZauzeta = false;
+	condition rampa;
+
+	boolean trazim_ulaz() {
+		if (mesta == 0 && ni == nu)
+			return false;
+		
+		nu++;
+		int redU = tiketU++;
+		while (redU != nextU && ni > 0 && rampaZauzeta) wait(rampa);
+		rampaZauzeta = true;
+		return true;
+	}
+
+	void usao() {
+		rampaZauzeta = false;
+		nu--;
+		mesta--;
+		nextU++;
+		signalAll(rampa);
+	}	
+
+	void trazim_izlaz() {
+		ni++;
+		int redI = tiketI++;
+		while (redI != nextI && rampaZauzeta) wait(rampa);
+		rampaZauzeta = true`;
+	}
+
+	void izasao() {
+		rampaZauzeta = false;
+		ni--;
+		mesta++;
+		nextI++;
+		signalAll(rampa);
+	}
+
+}
+
