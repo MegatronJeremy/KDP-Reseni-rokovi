@@ -1,0 +1,74 @@
+carEast() {
+	turn.wait();
+	
+	// lightswitch(entry).wait
+	mutexE.wait();
+	if (nE == 0) {
+		entry.wait();
+	}
+	nE++;
+	mutexE.signal();
+	
+	turn.signal();
+	
+	// pass
+	
+	
+	// lightswitch(entry).signal
+	mutexE.wait();
+	nE--;
+	if (nE == 0) {
+		entry.signal();
+	}
+	mutexE.signal();
+}
+
+-------------------------------------------------------
+
+[BRIDGE::BRIDGE||EAST::EAST(1..NE)||WEST::WEST(1..NW)]
+
+BRIDGE::[
+	int nE = 0, nW = 0;
+	
+	*[ true ->
+		EAST(i)?enter()->[
+			// bar west from entering
+			*[ nW > 0; WEST(i)?exit()->
+				nW--;
+			]
+			nE++;
+			EAST(i)!ok();
+		]
+		[]
+		EAST(i)?exit()->[
+			// always allow
+			nE--;
+		]
+		WEST(i)?enter()->[
+			// bar east from entering
+			* [ nE > 0; EAST(i)?exit()->
+				nE--;
+			]
+			nW++;
+			WEST(i)!ok();
+		]
+		WEST(i)?exit()->[
+			//always allow
+			nW--;
+		]
+	]
+]
+
+WEST::[
+	BRIDGE!enter();
+	BRIDGE?ok();
+	//cross
+	BRIDGE!exit();
+]
+
+EAST::[
+	BRIDGE!enter();
+	BRIDGE?ok();
+	//cross
+	BRIDGE!exit();
+]

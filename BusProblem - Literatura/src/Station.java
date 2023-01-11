@@ -1,4 +1,4 @@
-
+// kao region
 public class Station {
 	private String name;
 	private int id;
@@ -13,44 +13,56 @@ public class Station {
 	}
 
 	public synchronized Bus waitBus() {
-		try {
-			while (true) {
-				while (busIN) {
+		while (true) {
+			// cekam da ode prvi autobus
+			while (busIN) {
+				try {
 					wait();
-				}
-				numP++;
-				while (!busIN) {
-					wait();
-				}
-				numP--;
-				if (numP == 0)
-					notifyAll();
-				if (numFP > 0) {
-					numFP--;
-					return bus;
+				} catch (InterruptedException e) {
 				}
 			}
-		} catch (InterruptedException e) {
+			numP++;
+			while (!busIN) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+				}
+			}
+			numP--;
+			// dozvoljavam da i izadju svi
+			if (numP == 0)
+				notifyAll();
+
+			// ako je broj slobodnih mesta veci od nula
+			if (numFP > 0) {
+				numFP--;
+				return bus;
+			}
 		}
-		return null;
 	}
 
 	public synchronized int busEnter(int numFree, Bus b) {
-		try {
-			while (busIN) {
+		while (busIN) {
+			try {
 				wait();
+			} catch (InterruptedException e) {
 			}
-			busIN = true;
-			numFP = numFree;
-			bus = b;
-			notifyAll();
-			while (numP != 0) {
-				wait();
-			}
-			busIN = false;
-			bus = null;
-			notifyAll();
-		} catch (InterruptedException e) {
 		}
+		busIN = true;
+		// mogli smo dobiti numFree iz bus objekta
+		numFP = numFree;
+		bus = b;
+		notifyAll();
+		while (numP != 0) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+			}
+		}
+		busIN = false;
+		bus = null;
+		notifyAll();
+		// i bez ovog vracanja - samo da se izmeni polje
 		return numFP;
+	}
 }

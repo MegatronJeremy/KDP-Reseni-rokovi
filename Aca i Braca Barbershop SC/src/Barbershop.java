@@ -3,47 +3,64 @@ import java.util.Random;
 import monitor.MonitorSC;
 
 public class Barbershop extends MonitorSC {
-	static int wi[] = new int[2], ri[] = new int[2];
-	static Condition[][] barber_a = new Condition[2][10];
+	static int ticket = 0;
+	static Condition[] barber_a = new Condition[3];
 	static Condition[] chair_occ = { new Condition(), new Condition() };
 	static Condition[] customer_left = { new Condition(), new Condition() };
 	static Condition[] door_open = { new Condition(), new Condition() };
-	static boolean[] barber = new boolean[2];
-	static boolean[] door = new boolean[2];
-	static int cnt[] = new int[2];
+	static boolean[] barber = new boolean[3];
+	static int cnt[] = new int[3];
 	static int price[] = new int[2];
 	static final int N = 10;
 	static int idA[] = new int[2];
+	static int idB[] = new int[12];
+	static int ri = 0, wi = 0;
 
 	static {
-		for (int j = 0; j < 2; j++) {
-			for (int i = 0; i < 10; i++) {
-				barber_a[j][i] = new Condition();
-			}
+		for (int j = 0; j < 3; j++) {
+			barber_a[j] = new Condition();
 		}
+		for (int i = 0; i < 10; i++)
+			idB[i] = -1;
 	}
 
 	public static boolean getHaircut(int ko, int id) throws InterruptedException {
 		e.acquire();
 
-		if (cnt[0] + cnt[1] == 10) {
+		if (ko == 2 && barber[0] == true)
+			ko = 0;
+		else if (ko == 2 && barber[1] == true)
+			ko = 1;
+
+		if (cnt[0] + cnt[1] + cnt[2] == 10 && !barber[ko]) {
 			e.release();
 			return false;
 		}
-		if (ko == 2)
-			ko = cnt[0] > cnt[1] ? 1 : 0;
 
-		if (barber[ko] == false || cnt[ko] > 0) {
+		int myInd = -1;
+
+		if (barber[ko] == false || cnt[ko] > 0 || cnt[2] > 0) {
 			System.out.println("Musterija " + id + " sedi i ceka " + ko);
 			cnt[ko]++;
-			int ind = wi[ko]++;
-			wi[ko] %= N;
-			barber_a[ko][ind].waitSC();
-			cnt[ko]--;
+			if (ko == 2) {
+				myInd = wi++;
+				System.out.println(myInd + " " + id);
+				wi %= (N + 2);
+				barber_a[ko].waitSC(ticket++ * 12 + myInd);
+			} else
+				barber_a[ko].waitSC(ticket++ * 12);
 		}
 
+		if (ko == 2) {
+				System.out.println(myInd + " " + id);
+			ko = idB[myInd];
+			idB[myInd] = -1;
+		}
+
+		if (barber[ko])
+			barber[ko] = false;
+
 		idA[ko] = id;
-		barber[ko] = false;
 
 		System.out.println("Musterija " + id + " sedi u stolici kod " + ko);
 
@@ -65,12 +82,17 @@ public class Barbershop extends MonitorSC {
 
 		System.out.println("Barber " + ko + " je dostupan");
 
-		barber[ko] = true;
-
-		if (cnt[ko] > 0) {
-			int ind = ri[ko]++;
-			ri[ko] %= N;
-			barber_a[ko][ind].signalSC();
+		if (cnt[2] > 0 && barber_a[2].minrank() < barber_a[ko].minrank()) {
+			cnt[2]--;
+			int wi = barber_a[2].minrank() % 12;
+			idB[wi] = ko;
+			System.out.println(wi + " "+ ko);
+			barber_a[2].signalSC();
+		} else if (cnt[ko] > 0) {
+			cnt[ko]--;
+			barber_a[ko].signalSC();
+		} else {
+			barber[ko] = true;
 		}
 
 		chair_occ[ko].waitSC();
@@ -125,7 +147,7 @@ public class Barbershop extends MonitorSC {
 					getNextCustomer(id);
 					System.out.println("Sledeca musterija " + id + " je " + idA[id]);
 					synchronized (this) {
-						wait(1000 + new Random().nextInt(1000));
+						wait(1000 + new Random().nextInt(2000));
 					}
 					finishCut(new Random().nextInt(600) + 200, id);
 				}

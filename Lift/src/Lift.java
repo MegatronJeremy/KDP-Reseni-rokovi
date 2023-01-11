@@ -4,7 +4,7 @@ import java.util.concurrent.Semaphore;
 public class Lift {
 
 	private static final int N = 9;
-	private static Semaphore e = new Semaphore(1);
+	private static Semaphore e[] = new Semaphore[N];
 	private static int cekaOd[] = new int[N];
 	private static int cekaDo[] = new int[N];
 	private static Semaphore od[] = new Semaphore[N];
@@ -13,6 +13,7 @@ public class Lift {
 
 	static {
 		for (int i = 0; i < N; i++) {
+			e[i] = new Semaphore(1);
 			od[i] = new Semaphore(0);
 			doo[i] = new Semaphore(0);
 		}
@@ -28,7 +29,7 @@ public class Lift {
 				while (true) {
 					System.out.println("Na spratu " + sprat);
 
-					e.acquire();
+					e[sprat].acquire();
 
 					if (cekaDo[sprat] > 0) {
 						doo[sprat].release();
@@ -39,7 +40,7 @@ public class Lift {
 						lift.acquire();
 					}
 
-					e.release();
+					e[sprat].release();
 
 					System.out.println("Putujem...");
 					synchronized (this) {
@@ -79,10 +80,11 @@ public class Lift {
 					}
 					
 					
-					e.acquire();
+					e[src].acquire();
 					
 					cekaOd[src]++;
-					e.release();
+
+					e[src].release();
 					
 					od[src].acquire();
 					

@@ -1,89 +1,84 @@
-import java.util.LinkedList;
+import java.util.Random;
 import java.util.concurrent.Semaphore;
 
 public class Barbershop {
-	private static Semaphore entry = new Semaphore(1);
-	private static LinkedList<Semaphore> cust = new LinkedList<>();
-	private static LinkedList<Semaphore> barb = new LinkedList<>();
-	private static int waitingBarbers = 0, waitingCustomers = 0, chair = 3;
+	private static Semaphore e = new Semaphore(1);
+	private static final int K = 3, N = 20;
+	private static Semaphore[] barber_a = new Semaphore[N];
+	private static Semaphore[] chair_occ = new Semaphore[K];
+	private static Semaphore[] door_open = new Semaphore[K];
+	private static Semaphore[] customer_left = new Semaphore[K];
+	private static int wiC = 0, riC = 0, wiB = 0, riB = 0, cntC = 0, cntB = 0;
+
+	private static int[] pay = new int[K];
+
+	static {
+		for (int i = 0; i < K; i++) {
+			door_open[i] = new Semaphore(0);
+			chair_occ[i] = new Semaphore(0);
+			customer_left[i] = new Semaphore(0);
+		}
+		for (int i = 0; i < N; i++) {
+			barber_a[i] = new Semaphore(0);
+		}
+	}
 
 	private static class Customer extends Thread {
 		private int id = ID++;
 		private static int ID = 0;
 
-		private Semaphore x, b;
+		private boolean take_haircut() throws InterruptedException {
+			e.acquire();
 
-		boolean request_entry() throws InterruptedException {
-			entry.acquire();
-
-			if (cust.size() >= 20) {
-				entry.release();
+			if (cntC == 20) {
+				e.release();
 				return false;
 			}
 
-			x = new Semaphore(0);
-			cust.add(x);
+			if (cntB == 0) {
+				System.out.println("Customer " + id + " waiting for barber");
+				cntC++;
 
-			if (cust.size() > 1 || barb.isEmpty()) {
-				// wait for queue or a barber
-				entry.release();
-				x.acquire();
+				int ind = wiC++;
+				wiC %= N;
+				e.release();
+				barber_a[ind].acquire();
+				e.acquire();
+
+				cntC--;
 			}
-			
+
+			cntB--;
+
+			int myB = riB++;
+			riB %= K;
+
+			System.out.println("Customer " + id + " sitting in chair of " + myB);
+
+			e.release();
+
+			chair_occ[myB].release();
+
+			door_open[myB].acquire();
+
+			int y = pay[myB];
+			pay[myB] = 0;
+
+			System.out.println("Customer " + id + " paying: " + y + " to " + myB);
+
+			customer_left[myB].release();
+
 			return true;
-		}
-
-		void enter() {
-			// sit on sofa
-			b = barb.remove();
-			// a barber must exist
-			b.release();
-		}
-
-		void takeHaircut() throws InterruptedException {
-			// wait for haircut to be done
-			x.acquire();
-		}
-
-		void pay() throws InterruptedException {
-			// paid
-			b.release();
 		}
 
 		@Override
 		public void run() {
 			try {
 				while (true) {
-					// enter barbershop
-					if (!request_entry())
-						break;
-
-					System.out.println("Customer " + id + " entering barbershop");
+					take_haircut();
 					synchronized (this) {
-						wait(100);
+						wait(1000 + new Random().nextInt(2000));
 					}
-
-					enter();
-
-					System.out.println("Customer " + id + " taking haircut");
-					synchronized (this) {
-						wait(100);
-					}
-
-					takeHaircut();
-
-					System.out.println("Customer " + id + " paying");
-					synchronized (this) {
-						wait(100);
-					}
-
-					pay();
-
-					System.out.println("Customer " + id + " leaving");
-					synchronized (this) {
-						wait(100);
-					}
-
 				}
 			} catch (InterruptedException e) {
 				System.out.println("No free space...");
@@ -95,44 +90,42 @@ public class Barbershop {
 		private int id = ID++;
 		private static int ID = 0;
 
-		private Semaphore x, b;
+		private int get_next_customer() throws InterruptedException {
+			e.acquire();
 
-		private void get_next_customer() throws InterruptedException {
-			entry.acquire();
+			int myInd = wiB++;
+			wiB %= K;
 
-			b = new Semaphore(0);
-			barb.add(b);
+			System.out.println("Barber " + myInd + " available");
 
-			// wait for next barber or for a customer
-			System.out.println("Barber " + id + " sleeping...");
-			
-			if (cust.size() > 0) {
-				cust.peek().release();
+			cntB++;
+
+			if (cntC != 0) {
+				int ind = riC++;
+				riC %= N;
+
+				barber_a[ind].release();
 			} else {
-				entry.release();
+				e.release();
 			}
-			b.acquire();
 
-			x = cust.remove();
+			chair_occ[myInd].acquire();
 
+			e.release();
+
+			return myInd;
 		}
 
-		private void got_customer() {
-			// acquired customer - now signal someone who can continue
-			if (cust.size() > 0 && barb.size() > 0) {
-				cust.peek().release();
-			} else
-				entry.release();
-		}
+		void finishHaircut(int myInd) throws InterruptedException {
+			pay[myInd] = new Random().nextInt(200) + 600;
 
-		void finishHaircut() {
-			// haircut done
-			x.release();
-		}
+			System.out.println("Customer for " + myInd + " has to pay " + pay[myInd]);
 
-		void receivePay() throws InterruptedException {
-			// wait for pay
-			b.acquire();
+			door_open[myInd].release();
+
+			customer_left[myInd].acquire();
+
+			e.release();
 		}
 
 		@Override
@@ -140,23 +133,14 @@ public class Barbershop {
 			try {
 				while (true) {
 					// get next customer begin
-					get_next_customer();
-					// get next customer end
-					got_customer();
+					int myInd = get_next_customer();
 
-					System.out.println("Barber " + id + " giving haircut");
+					System.out.println("Barber " + id + " giving haircut to " + myInd);
 					synchronized (this) {
-						wait(3000);
+						wait(1000 + new Random().nextInt(2000));
 					}
 
-					finishHaircut();
-
-					System.out.println("Barber " + id + " receiving pay");
-					synchronized (this) {
-						wait(100);
-					}
-
-					receivePay();
+					finishHaircut(myInd);
 				}
 			} catch (InterruptedException e) {
 			}
