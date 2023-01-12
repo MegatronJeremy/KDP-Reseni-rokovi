@@ -55,5 +55,7 @@ void consumer(int i) {
 		mutexC.signal();
 		
 		consume(item);
+		
+		headB = (headB + 1) % B;
 	}
 }
