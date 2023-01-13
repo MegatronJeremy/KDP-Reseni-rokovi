@@ -18,8 +18,8 @@ Process Coordinator() {
 	Queue q;
 	
 	while (true) {
-		if (q.peek().type == "putC" && slots[tail] == N ||
-			q.peek().type == "getC" && items[q.peek().id] > 0) {
+		if (!q.empty() && (q.peek().type == "putC" && slots[tail] == N ||
+			q.peek().type == "getC" && items[q.peek().id] > 0)) {
 			msg = q.poll();
 		} else {
 			mbx_get(msg, AB, INF, st);
