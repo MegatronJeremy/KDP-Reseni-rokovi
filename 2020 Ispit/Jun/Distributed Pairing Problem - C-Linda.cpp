@@ -16,7 +16,7 @@ int node(int id) {
 		}
 		// try to acquire node atomically if unpaired
 		if (pair == -1) {
-			// acquiring multiple resources, is this ok? YES
+			// acquiring multiple resources, is this ok? YES - NO CIRCULAR ACQUISITION EXISTS
 			in("paired", id, false); // nobody can acquire ME after taking this - I AM ACQUIRING (downstram acquisition)
 			in("paired", i, ?flag); // i have the correct value and NOBODY can acquire THIS NODE - I HAVE ACQUIRED
 			if (flag == false) {
