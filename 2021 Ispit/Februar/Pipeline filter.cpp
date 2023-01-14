@@ -1,7 +1,7 @@
 chan in, out;
 
 Process filter(int i:1..n) {
-	float buf[3] = {0};
+	float buf[2] = {0};
 	int cnt = 0;
 	
 	float input;
@@ -22,9 +22,9 @@ Process filter(int i:1..n) {
 		// sortiraj koristenjem treceg slota za float
 		// buf[1] mora biti veci
 		if (buf[0] > buf[1]) {
-			buf[2] = buf[0];
+			input = buf[0];
 			buf[0] = buf[1];
-			buf[1] = buf[2];
+			buf[1] = input;
 		}
 		
 		receive in(input);
