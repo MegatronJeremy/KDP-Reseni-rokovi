@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="src" path="AtomicBroadcast/src"/>
-	<classpathentry kind="src" path="BumperCars/src"/>
-	<classpathentry kind="src" path="Parking/src"/>
-	<classpathentry kind="src" path="SingleBathroom/src"/>
-	<classpathentry kind="output" path="AtomicBroadcast/bin"/>
-</classpath>
