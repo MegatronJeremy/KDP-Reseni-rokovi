@@ -13,13 +13,15 @@ Process Coordinator() {
 	int tail = 0;
 	int head[N] = {0};
 	
-	Msg msg;
+	Msg msg, msg_prod = NULL;
 	boolean st;
 	Queue q;
 	
 	while (true) {
-		if (!q.empty() && (q.peek().type == "putC" && slots[tail] == N ||
-			q.peek().type == "getC" && items[q.peek().id] > 0)) {
+		if (msg_prod != NULL && slots[tail] == N) {
+			msg = msg_prod;
+			msg_prod = NULL;
+		} else if (!q.empty() && items[q.peek().id] > 0) {
 			msg = q.poll();
 		} else {
 			mbx_get(msg, AB, INF, st);
@@ -28,6 +30,7 @@ Process Coordinator() {
 			case "put":
 				if (slots[tail] < N) {
 					msg.type = "putC";
+					msg_prod = msg;
 					break;
 				}
 			case "putC":
@@ -44,6 +47,7 @@ Process Coordinator() {
 			case "get":
 				if (items[msg.id] == 0) {
 					msg.type = "getC";
+					q.add(msg);
 					break;
 				}
 			case "getC":
