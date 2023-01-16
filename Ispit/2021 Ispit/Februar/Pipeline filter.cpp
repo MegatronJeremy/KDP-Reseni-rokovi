@@ -1,46 +1,56 @@
 chan in, out;
 
+// sortira? opadajuce - po sumama koje posalje pre EOS svaki filter - radi do 2*N brojeva
+// u svakom filteru se velicina niza smanjuje za do 2
 Process filter(int i:1..n) {
-	float buf[2] = {0};
-	int cnt = 0;
-	
+	float buf[2] = {EOS};
 	float input;
+	
 	receive in(input);
 	while (input != EOS) {
-		if (cnt < 2) {
-			// cekaj na dva elementa
-			buf[cnt++] = input;
-		} else if(input < buf[1]) { 
-			// manji od veceg (buf[1]) - uvek salji veceg 
-			send out(buf[1]);
-			buf[1] = input;
-		} else {
-			// veci od oba (ili jednak)
-			send out(input);
-		}
-		
-		// sortiraj koristenjem treceg slota za float
-		// buf[1] mora biti veci
-		if (buf[0] > buf[1]) {
-			input = buf[0];
+		if (buf[0] == EOS) {
+			buf[0] = input;
+		} else if(buf[1] == EOS) {
+			// saberi prva dva primljena broja
+			bud[0] += input;
+			
+			// primi sledeceg
+			receive in(input);
+			if (input == EOS) break; // nema vise
+						
+			// swap ako treba
+			if (input < buf[0]) {
+				buf[1] = buf[0];
+				buf[0] = input;
+			} else {
+				buf[1] = input;
+			}
+		} else if (input > buf[1]) {
+			// veci od oba - posalji manjeg
+			send out(buf[0]);
 			buf[0] = buf[1];
 			buf[1] = input;
+		} else if (input > buf[0]) {
+			// veci od prvog - posalji manjeg
+			send out(buf[0]);
+			buf[0] = input;
+		} else {
+			// manji od oba
+			send out(input);
 		}
 		
 		receive in(input);
 	}
 	
-	// ASC sortiran niz od 2*n? posaljemo NA KRAJU buf[1] (veci) pa buf[0] (manji) - obrnuti redosled
-	// onaj ispred ce opet poslati ISTO NA KRAJU ALI PRE TOGA SVOJA DVA SORTIRANA MINIMUMA
-	// CHANNEL JE FIFO
+	if (buf[1] == EOS) buf[1] = 0;
+	// mora imati bar jedan element - buf[0] (niz je neprazan)
 	
-	// ovde samo saljem sumu - pa nisam ni trebao voditi racuna o sortiranosti dva elementa
 	send out(buf[0] + buf[1]);
 	send out(EOS);
 }
+----------------------------------------------------------------------------------------------
 
-
-Primer (za sortiranje):
+Primer (za sortiranje - nevezano za ovo resenje):
 Na ulazu je 2413
 
 3 --> ||   || --> ||   ||
@@ -61,7 +71,6 @@ E --> ||1 2|| --> ||3 4||
 
 / --> ||/ /|| --> ||/ /|| --> 1 2 3 4
 --------------------------------------------------------------
--> sortira pa sumira do 2*n ulaznih realnih brojeva
 -> sacuvaj 2 maksimalna broja, ostale prosledi
 -> saberi 2 maksimalna broja, i prosledi sumu pa EOS
 -> sortirano od maksimalne do minimalne sume?
