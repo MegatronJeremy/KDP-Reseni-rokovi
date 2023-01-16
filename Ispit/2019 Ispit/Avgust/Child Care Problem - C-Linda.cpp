@@ -1,10 +1,10 @@
 void Roditelj(int dovodi) {
 	// bring children - wait(mutex)
 	in("mutex");
-	int brD, brV;
+	int brD, brV, x, y;
 	rd("brD", ?brD);
 	rd("brV", ?brV);
-	if (brD + dovodi > 3*brV) {
+	if (brD + dovodi > 3*brV || rdp("who", ?x, ?y)) { // who.queue() || cond
 		int myT;
 		in("tail", ?myT);
 		out("tail", myT+1);
@@ -29,7 +29,7 @@ void Roditelj(int dovodi) {
 void Vaspitacica() {
 	// start work
 	in("mutex");
-	int brD, brV;
+	int brD, brV, x, y;
 	rd("brV", ?brV);
 	out("brV", brV+1);
 	signalCode();
@@ -40,7 +40,7 @@ void Vaspitacica() {
 	in("mutex");
 	rd("brD", ?brD):
 	rd("brV", ?brV);
-	if (brD > 3 * (brV-1)) {
+	if (brD > 3 * (brV-1) || rdp("who", ?x, ?y)) {
 		int myT;
 		in("tail", ?myT);
 		out("tail", myT+1);
@@ -63,7 +63,7 @@ void signalCode() {
 	rd("brD", ?brD);
 	rd("brV", ?brV);
 	
-	if (rdp("who", ?who, next) == true  //who.queue()
+	if (rdp("who", ?who, next) == true  //who.peek()
 		&& (who == 0 && brD <= 3*(brV-1)  // conditions
 		|| who != 0 && who + brD <= 3*brV)) {
 		in("who", who, next);
