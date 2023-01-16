@@ -14,8 +14,8 @@ BAG::{
 						worker(i) ! spaceData(space[j], j);
 						j++;
 					}
-				worker(!) ! spaceData(-1, -1);
-				worker(i) ! getData(space[k], k);
+				worker(i) ! spaceData(-1, -1);
+				worker(i) ! getData(k);
 			}
 			k++;
 		}

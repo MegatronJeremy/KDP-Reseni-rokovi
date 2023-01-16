@@ -6,13 +6,12 @@ WORKER:: {
 		bag ! getTask();
 		body tmp;
 		*{ j != -1; bag ? spaceData(tmp, j); ->
-			j != -1; -> 
-				space[j] = tmp;
+			j != -1; -> space[j] = tmp;
 		}
-		bag ? getData(tmp, j);
+		bag ? getData(j);
 		j != -1; ->
 			space[j] = tmp;
-			CALCULATE::...
+			CALCULATE::... // result[j] = calculate(space[j], j);
 			collector ! getData(result[j], j);
 	}
 }
