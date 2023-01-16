@@ -68,7 +68,7 @@ void janitor() {
 	in("nJ", ?nJ);
 	out("nJ", nJ-1);
 	
-	if (adultQueued) {
+	if (adultQueued()) {
 		signalAdult(); // can only signal an adult
 	} else {
 		out("mutex");
