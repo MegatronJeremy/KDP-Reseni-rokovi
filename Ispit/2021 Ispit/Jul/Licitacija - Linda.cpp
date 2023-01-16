@@ -34,23 +34,33 @@ void vodja_licitacije() {
 	}
 }
 
-
+// busy wait dok licitacija nije gotova (ok? - ne radi nikakav drugi posao)
+// i samo cita torku ako ne povecava vrednost
 bool ucesnik_u_licitaciji(int i, int n) {
 	bool over;
-	rd("over", over);
+	rd("over", ?over);
 	
 	while (!over) {
 		int bid, t;
-		in("current_bid", ?bid, ?t);
 		
-		if (raise_bid(bid) == true) {
-			out("current_bid", bid, i); 
-			// bid raised - i am now the leader
-		} else {
-			out("current_bid", bid, t); 
-			// don't want to raise - leader stays the same
-		}
-		rd("over", over);
+		// look at current bid
+		rd("current_bid", ?bid, ?t);
+		
+		// check if i want to raise the bid (and pass info if I am the leader)
+		if (t != i && want_to_raise(bid) == true) {
+			in("current_bid", ?bid, ?t);
+			
+			int raised_val = raise_bid(bid);
+			if (val_raised > 0) {
+				// bid raised - i am now the leader
+				out("current_bid", raised_val, i); 
+			} else {
+				// leader stays the same - i changed my mind
+				out("current_bid", bid, t); 
+			}
+		} 
+		
+		rd("over", ?over);
 	}
 	// it's over - wait for everyone else to finish
 	int x;
@@ -73,7 +83,7 @@ bool ucesnik_u_licitaciji(int i, int n) {
 	return ret;
 }
 
-void tick() {
+void tick() { // periodicno se zove
 	int x = 0;
 	in("tod", ?x);
 	out("tod", x+1);
