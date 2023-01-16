@@ -11,22 +11,31 @@ CROSSWALK::[
 	int cReq[N];
 	int phead = 0, ptail = 0;
 	int chead = 0, ctail = 0;
-	int timeToGreen = system_current_time + K;
+	int timeToGreen = INF;
 	int timeToRed;
 	
 	*[ true->
-		wP > 0 && !greenLight && timeToGreen - system_current_time == K;->GREEN_ON
+		wP > 0 && !greenLight && (timeToGreen - system_current_time <= 0 || cInterval >= C);->[
+			// GREEN_ON
+			greenLight = true;
+			*[ nC > 0; ->
+				wC > 0; -> CAR_CROSS
+				[]
+				CAR(i)?crossed()->nC--;
+			]
+			cInterval = 0;
+			timeToRed = system_current_time + G;
+		]
 		[]
-		greenLight && timeToRed - system_current_time == G; -> [
+		greenLight && timeToRed - system_current_time <= 0;->[
+			// RED_ON
 			greenLight = false;
 			*[ nP > 0;->
 				wP > 0;->PEDESTRIAN_CROSS
 				[]
-				PEDESTRIAN(i)?crossed()->[
-					nP--;
-				]
+				PEDESTRIAN(i)?crossed()->nP--;
 			]
-			timeToGreen = system_current_time + K;
+			timeToGreen = INF;
 		]
 		[]
 		PEDESTRIAN(i)?cross()->[
@@ -34,7 +43,7 @@ CROSSWALK::[
 			pReq[phead] = i;
 			phead = (phead+1) % T;
 			[ !greenLight && wP == 1;->
-				timeToGreen = system_current_time;
+				timeToGreen = system_current_time + K;
 			]
 		]
 		[]
@@ -55,22 +64,8 @@ CROSSWALK::[
 		CAR(i)?crossed()->[
 			nC--;
 			cInterval++;
-			[ cInterval == C; ->
-				cInterval = 0;
-				GREEN_ON
-			]
 		]
 	]
-]
-
-GREEN_ON::[
-	greenLight = true;
-	*[ nC > 0; ->
-		wC > 0; -> CAR_CROSS
-		[]
-		CAR(i)?crossed() -> nC--;
-	]
-	timeToRed = system_current_time + G;
 ]
 
 CAR_CROSS::[
