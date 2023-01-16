@@ -1,46 +1,27 @@
 chan in, out;
-void Process(int i = 1) {
-	int min = INT_MAX;
+void Process(int i = 0..N-1) {
+	int min = EOS;
 	int input;
-	read in(input);
+	
+	receive in(input);
 	while (input != EOS) {
-		input = -input;
-		if (input < min) {
+		if (min == EOS) {
+			min = input;
+		} else if (input < min) {
+			send out(min);
 			min = input;
 		} else {
 			send out(input);
 		}
-		read in(input);
+		receive in(input);
 	}
-	send out(min);
-	send out(EOS);
-}
-
-void Process(int i = 2..N-1) {
-	...kako je opisano u zadatku
-}
-
-void Process(int i = N) {
-	int min = INT_MAX;
-	int input;
-	read in(input);
-	while (input != EOS) {
-		if (input < min) {
-			min = input;
-		} else {
-			send out(-input);
-		}
-		read in(input);
-	}
-	send out(-min);
+	send out(min);	// niz je nenulte velicine
 	send out(EOS);
 }
 
 
 ----------------------------------------------------------------------
-Nisam tacno siguran sta se ovde treba raditi, ali moguce ideja:
-Dodamo dva procesa na pocetak i kraj niza.
-Prvi pretvara sve brojeve u negativne i prosledjuje dalje.
-Drugi pretvara sve negativne brojeve u pozitivne i prosledjuje dalje.
--> Ovo rade uz odgovarajuce trazenje minimuma
-Ovako ce krajnji niz biti sortiran opadajuce.
+-> Trazenje minimuma
+-> Ako se poslednje izbaci minimalna vrednost, a niz ze prima od PRVOG do POSLEDNJEG
+-> Posalji min POSLEDNJE
+-> Niz ce NA KRAJU BITI SORTIRAN OPADAJUCE

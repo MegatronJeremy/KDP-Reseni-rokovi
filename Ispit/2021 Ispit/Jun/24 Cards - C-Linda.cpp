@@ -49,6 +49,10 @@ void Player(int id) {
 				winner = false;
 			}
 			out("end", true);
+			
+			// ensure that next person is not waiting before finishing
+			out("deck", left, deck[0]);
+			
 			break;
 		} else {
 			// game not over
@@ -56,8 +60,8 @@ void Player(int id) {
 		}
 		
 		int i = 3.0 * rand() / RAND_MAX
-		out("deck", left, deck[i]); // uvek ce moci jedan proces da se izvrsava
-		in("deck", right, ?deck[i]); // nema deadlocka - ali potencijalno izgladnjivanje
+		out("deck", left, deck[i]); // uvek ce moci jedan proces da se izvrsava DOK TRAJE IGRA
+		in("deck", right, ?deck[i]); 
 	}
 }
 
