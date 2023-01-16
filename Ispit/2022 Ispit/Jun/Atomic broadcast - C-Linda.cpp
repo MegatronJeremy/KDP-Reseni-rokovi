@@ -42,6 +42,7 @@ void producer() {
 		
 		// wait for slot to become available
 		in("cnt", tailB, C);
+		out("cnt", tailB, 0);
 		
 		// put item in empty slot
 		out("buffer", tailB, item);
