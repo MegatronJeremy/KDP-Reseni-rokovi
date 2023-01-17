@@ -20,6 +20,7 @@ process ServerRW {
 			case "read":
 				if (nW > 0 || !q.empty()) {
 					msg.op = "readC"
+					q.add(msg);
 					break;
 				} // moze biti u queue citaoc ili pisac pre mene!
 			case "readC":
@@ -29,6 +30,7 @@ process ServerRW {
 			case "write":
 				if (nR > 0 || nW > 0) { 
 					msg.op = "writeC";
+					q.add(msg);
 					break;
 				} // ako mogu da prodjem queue je prazan!
 			case "writeC":
