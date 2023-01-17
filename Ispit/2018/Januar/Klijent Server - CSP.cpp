@@ -2,16 +2,19 @@
 
 P::[
 	int served[3] = {0};
+	bool servingRequest[3] = {false};
 	int next = 0;
 	
 	// pass requests
 	*[ true ->
-		client(i)?request()->[
+		servingRequest[next] == false; client(i)?request()->[
+			servingRequest[next] = true;
 			server(next)!clientRequest(i);
 			client(i)!next;
 		]
 		[]
 		server(i)?requestDone()->[
+			servingRequest[i] = false;
 			served[i]++;
 			
 			// calculate the next minimum (look at notes)
@@ -35,31 +38,12 @@ P::[
 	]
 ]
 
-S::[
-	const int N = 100; 
-	// max number of requests
-	
-	int requestBuf[N];
-	int head = 0, tail = 0;
-	int cnt = 0;
-	
-	*[ true -> 
-		p?clientRequest(i)-> [
-			cnt++;
-			requestBuf[tail] = i;
-			tail = (tail + 1) % N;
-		]
-		[]
-		cnt > 0; -> [
-			cnt--;
-			int i = requestBuf[head];
-			head = (head + 1) % N;
-			
-			// serve request...
-			
-			client(i)!served();
-			p!requestDone();
-		]
+S::*[
+	p?clientRequest(i)-> [
+		// serve request...
+		
+		client(i)!served();
+		p!requestDone();
 	]
 ]
 
@@ -70,19 +54,6 @@ K::*[
 	
 	s(server)?served();
 ]
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ---------------------------------------------------------------------------------------
 Stotinu klijenata K , tri servera S
