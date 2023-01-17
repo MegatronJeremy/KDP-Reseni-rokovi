@@ -2,20 +2,17 @@
 
 P::[
 	int served[3] = {0};
-	bool servingRequest[3] = {false};
 	int next = 0;
 	
 	// pass requests
 	*[ true ->
-		servingRequest[next] == false; client(i)?request()->[
-			servingRequest[next] = true;
+		client(i)?request()->[
 			server(next)!clientRequest(i);
 			client(i)!next;
 		]
 		[]
-		server(i)?requestDone()->[
-			servingRequest[i] = false;
-			served[i]++;
+		client(i)?serverServed(j)->[
+			served[j]++;
 			
 			// calculate the next minimum (look at notes)
 			[ served[2] < served[1] ->
@@ -39,11 +36,27 @@ P::[
 ]
 
 S::*[
+	int M = 100;
+	int requests[M];
+	int head = 0, tail = 0;
+	int cnt = 0;
+	
+	// nedeterministicki ulazi u jednu od ove dve grane
+	//pa moze u jednom navratu primiti vise zahteva (kao i drugi serveri)
 	p?clientRequest(i)-> [
+		request[tail] = i;
+		tail = (tail + 1) % M;
+		cnt++;
+	]
+	[] 
+	cnt > 0;->[ 
+		int i = request[head];
+		head = (head + 1) % M;
+		cnt--;
+		
 		// serve request...
 		
 		client(i)!served();
-		p!requestDone();
 	]
 ]
 
@@ -55,6 +68,7 @@ K::*[
 	//...
 	
 	s(server)?served();
+	p!serverServed(served);
 ]
 
 ---------------------------------------------------------------------------------------
