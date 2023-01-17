@@ -114,6 +114,7 @@ Process SingleBathroom {
 			case "exitWC";
 				nW--;
 				cnt--;
+				mbx_put(msg, C[msg.id]);
 				break;
 			case "exitM":
 				if (nM == 1 && nC > 0) {
@@ -126,6 +127,7 @@ Process SingleBathroom {
 			case "exitMC";
 				nM--;
 				cnt--;
+				mbx_put(msg, C[msg.id]);
 				break;
 		}
 		
