@@ -43,18 +43,7 @@ S::[
 	int head = 0, tail = 0;
 	int cnt = 0;
 	
-	*[ true -> 
-		p?clientRequest(i)-> [
-			cnt++;
-			requestBuf[tail] = i;
-			tail = (tail + 1) % N;
-		]
-		[]
-		cnt > 0; -> [
-			cnt--;
-			int i = requestBuf[head];
-			head = (head + 1) % N;
-			
+	*[ p?clientRequest(i)-> [
 			// serve request...
 			
 			client(i)!served();
@@ -68,21 +57,10 @@ K::*[
 	p!request();
 	p?server;
 	
+	//...
+	
 	s(server)?served();
 ]
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ---------------------------------------------------------------------------------------
 Stotinu klijenata K , tri servera S
