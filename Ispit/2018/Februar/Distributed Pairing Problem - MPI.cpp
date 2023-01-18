@@ -1,7 +1,6 @@
 struct Msg {
 	int id;
 	bool wantToPair;
-	bool request;
 }
 
 mbx N[M]
@@ -20,13 +19,12 @@ Proces Node(id:0..M-1) {
 		Msg msg;
 		msg.id = id;
 		msg.wantToPair = myPair == -1;
-		msg.request = true;
 		
 		mbx_put(msg, N[i]);
 		
 		mbx_get(msg, N[id], INF, st);
-		while (msg.request == true) {
-			requestQ.put(msg); // ne zelim da opsluzujem zahteve ovde
+		while (msg.id > id) {
+			requestQ.put(msg); // ne zelim da opsluzujem zahteve od vecih id-jeva ovde
 			mbx_get(msg, N[id], INF, st); // stavi ih u red dok ne dobijem odgovor
 		}
 		
@@ -52,6 +50,7 @@ Proces Node(id:0..M-1) {
 
 		// i know this is a pairing request
 		
+		// ovde su opsluzeni vec svi odgovori od manjih id-jeva - ostali samo zahtevi
 		if (msg.wantToPair == true && myPair == -1) {
 			myPair = msg.id;
 			msg.wantToPair = true;
