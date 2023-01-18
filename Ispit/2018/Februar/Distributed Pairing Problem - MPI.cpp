@@ -21,7 +21,7 @@ Proces Node(id:0..M-1) {
 		mbx_put(msg, N[i]);
 		
 		// i know this is not a pairing request - but a response
-		mbx_get(msg, N[id]);
+		mbx_get(msg, N[id], INF, st);
 		if (msg.wantToPair == true) {
 			myPair = msg.id;
 		}
