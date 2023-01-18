@@ -1,6 +1,7 @@
 struct Msg {
 	int id;
 	bool wantToPair;
+	bool request;
 }
 
 mbx N[M]
@@ -9,7 +10,9 @@ Proces Node(id:0..M-1) {
 	int myPair = -1;
 	bool st;
 	
-	// salji i primaj zahteve od procesa sa manjim id-jem
+	Queue requestQ;
+	
+	// salji zahteve i primaj odgovore od procesa sa manjim id-jem
 	for (int i = 0; i < id; i++) {
 		if (i == id || links[i][id] == false)
 			continue;
@@ -17,24 +20,35 @@ Proces Node(id:0..M-1) {
 		Msg msg;
 		msg.id = id;
 		msg.wantToPair = myPair == -1;
+		msg.request = true;
 		
 		mbx_put(msg, N[i]);
 		
-		// i know this is not a pairing request - but a response
 		mbx_get(msg, N[id], INF, st);
+		while (msg.request == true) {
+			requestQ.put(msg); // ne zelim da opsluzujem zahteve ovde
+			mbx_get(msg, N[id], INF, st); // stavi ih u red dok ne dobijem odgovor
+		}
+		
+		// i know this is not a pairing request - but a response
 		if (msg.wantToPair == true) {
 			myPair = msg.id;
 		}
 	}
 	
-	// primaj od onih sa vecim id-jem - nema kruznih zavisnosti za uparivanje
+	// primaj zahteve od onih sa vecim id-jem i njima salji odgovore - nema kruznih zavisnosti za uparivanje
 	for (int i = id+1; i < M; i++) {
 		if (i == id || links[i][id] == false)
 			continue;
 		
 		Msg msg;
 		
-		mbx_get(msg, N[id], INF, st);
+		// vadi iz reda dok u njemu ima zahteva
+		if (requestQ.empty()) { 
+			mbx_get(msg, N[id], INF, st);
+		} else {
+			msg = requestQ.remove();
+		}
 
 		// i know this is a pairing request
 		
