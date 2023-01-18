@@ -34,7 +34,7 @@ Proces Node(id:0..M-1) {
 		
 		Msg msg;
 		
-		mbx_get(msg, N[i], INF, st);
+		mbx_get(msg, N[id], INF, st);
 
 		// i know this is a pairing request
 		
